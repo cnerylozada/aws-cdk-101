@@ -14,23 +14,30 @@ export class TokenDistributionStack extends cdk.Stack {
       default: "dev",
     });
 
-    const bucket = new s3.Bucket(this, `mainbucket`, {
-      bucketName: `mainbucket-${this.account}-${environment.valueAsString}`,
-      versioned: true,
+    const mainBucket = new s3.Bucket(this, `daily-node-rewards-tracking`, {
+      bucketName: `daily-node-rewards-tracking-${environment.valueAsString}`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    const functionName = "storeDailyTokenDistribution";
-    const myFunction = new NodejsFunction(this, "storeDailyTokenDistribution", {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, `/../resources/${functionName}.ts`),
-      handler: `mainHandler`,
-      environment: {
-        BUCKET: bucket.bucketName,
-      },
-    });
+    const lambdaName = "storeDailyTokenDistribution";
+    const storeDailyDistributionLambda = new NodejsFunction(
+      this,
+      "storeDailyTokenDistribution",
+      {
+        functionName: `storeDailyTokenDistribution_${environment.valueAsString}`,
+        runtime: lambda.Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, `/../resources/${lambdaName}.ts`),
+        handler: `mainHandler`,
+        environment: {
+          BUCKET: mainBucket.bucketName,
+          REGION: this.region,
+        },
+      }
+    );
+    mainBucket.grantReadWrite(storeDailyDistributionLambda);
+
     // Define the Lambda function URL resource
-    const myFunctionUrl = myFunction.addFunctionUrl({
+    const myFunctionUrl = storeDailyDistributionLambda.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
     });
     // Define a CloudFormation output for your URL

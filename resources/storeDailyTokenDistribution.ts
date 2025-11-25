@@ -1,5 +1,5 @@
 import { Handler } from "aws-lambda";
-
+import { S3Client, PutObjectCommand, S3ClientConfig } from "@aws-sdk/client-s3";
 interface IBalanceListResponse {
   totalValidWorkloads: number;
   nodeInformation: {
@@ -40,6 +40,22 @@ const getLastBalanceList = async () => {
 
 const storeDistribution = async (lastBalanceList: IBalanceListResponse) => {
   const BUCKET_NAME = process.env.BUCKET;
+  const REGION = process.env.REGION;
+
+  const config: S3ClientConfig = { region: REGION };
+  const client = new S3Client(config);
+
+  const input = {
+    Bucket: `${BUCKET_NAME}`,
+    Key: "users/jack.json",
+    Body: JSON.stringify(lastBalanceList),
+  };
+  const command = new PutObjectCommand(input);
+  try {
+    await client.send(command);
+  } catch (error) {
+    console.log(`storeDistribution error`, error);
+  }
 };
 
 export const mainHandler: Handler = async function () {
