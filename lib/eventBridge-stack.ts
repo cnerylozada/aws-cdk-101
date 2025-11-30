@@ -50,5 +50,11 @@ export class EventBridgeStack extends cdk.Stack {
       },
     });
     rule.addTarget(new targets.LambdaFunction(lambda1));
+
+    const scheduleRule = new events.Rule(this, "scheduleRule", {
+      ruleName: "scheduleRule",
+      schedule: events.Schedule.cron({ hour: "23", minute: "40" }),
+    });
+    scheduleRule.addTarget(new targets.LambdaFunction(lambda1));
   }
 }
