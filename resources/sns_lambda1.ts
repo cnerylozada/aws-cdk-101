@@ -14,18 +14,16 @@ export const mainHandler: Handler = async () => {
       Key: "lucciano/mock1132.json",
       Body: JSON.stringify(message),
     });
-    const putObjectResponse = await s3Client.send(command);
-    console.log(`putObjectResponse`, putObjectResponse);
+    await s3Client.send(command);
+  } catch (error) {
+    console.log(`error`, error);
 
-    const publishResponse = await snsClient.send(
+    await snsClient.send(
       new PublishCommand({
-        Message: `Hello from lambda!`,
+        Message: `Error: ${error}`,
         TopicArn: process.env.TOPIC_ARN,
       })
     );
-    console.log(`publishResponse`, publishResponse);
-  } catch (error) {
-    console.log(`error`, error);
   }
 
   return {

@@ -1,11 +1,11 @@
 import * as cdk from "aws-cdk-lib/core";
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
-import * as sns from "aws-cdk-lib/aws-sns";
-import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import path from "path";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 
 export class EventBridgeStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -16,33 +16,39 @@ export class EventBridgeStack extends cdk.Stack {
       default: "dev",
     });
 
-    const bucketName = `bucket3011`;
+    const bucketName = "bucket1214";
     const bucket = new s3.Bucket(this, bucketName, {
       bucketName: `${bucketName}-${environment.valueAsString}`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
+      eventBridgeEnabled: true,
     });
-
-    const errorTopicSNS = new sns.Topic(this, "errorTopic", {
-      topicName: `errorTopic_${environment.valueAsString}`,
-    });
-    errorTopicSNS.addSubscription(
-      new subscriptions.EmailSubscription("cnerylozada@gmail.com")
-    );
 
     const functionName = `lambda1`;
-    const uploadFileLambda = new NodejsFunction(this, functionName, {
+    const lambda1 = new NodejsFunction(this, functionName, {
       functionName: `${functionName}_${environment.valueAsString}`,
-      runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, `/../resources/s3/${functionName}.ts`),
+      entry: path.join(
+        __dirname,
+        `/../resources/eventBridge_${functionName}.ts`
+      ),
       handler: "mainHandler",
-      environment: {
-        BUCKET: bucket.bucketName,
-        TOPIC_ARN: errorTopicSNS.topicArn,
-      },
+      runtime: lambda.Runtime.NODEJS_20_X,
     });
 
-    bucket.grantReadWrite(uploadFileLambda);
-    errorTopicSNS.grantPublish(uploadFileLambda);
+    const ruleName = `S3UploadRule`;
+    const rule = new events.Rule(this, ruleName, {
+      ruleName: `${ruleName}_${environment.valueAsString}`,
+      eventPattern: {
+        source: ["aws.s3"],
+        detailType: ["Object Created"],
+        detail: {
+          bucket: { name: [bucket.bucketName] },
+          object: {
+            key: events.Match.wildcard("folder-rule/*.pdf"),
+          },
+        },
+      },
+    });
+    rule.addTarget(new targets.LambdaFunction(lambda1));
   }
 }
