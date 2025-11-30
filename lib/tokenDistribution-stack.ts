@@ -20,6 +20,7 @@ export class TokenDistributionStack extends cdk.Stack {
     const mainBucket = new s3.Bucket(this, `daily-node-rewards-tracking`, {
       bucketName: `daily-node-rewards-tracking-${environment.valueAsString}`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
 
     const lambdaName = "storeDailyTokenDistribution";

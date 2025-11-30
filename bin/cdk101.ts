@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib/core";
-import { TokenDistributionStack } from "../lib/tokenDistribution-stack";
+import { EventBridgeStack } from "../lib/eventBridge-stack";
 
 const app = new cdk.App();
 
-new TokenDistributionStack(app, "TokenDistributionStack", {
+new EventBridgeStack(app, "EventBridgeStack", {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
