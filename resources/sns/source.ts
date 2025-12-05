@@ -15,13 +15,32 @@ export const mainHandler: Handler = async () => {
       Body: JSON.stringify(message),
     });
     await s3Client.send(command);
+
+    await snsClient.send(
+      new PublishCommand({
+        Message: `message from source`,
+        TopicArn: process.env.MAIN_TOPIC_ARN,
+        MessageAttributes: {
+          eventType: {
+            DataType: "String",
+            StringValue: "ORDER_CREATED",
+          },
+          priority: {
+            DataType: "String",
+            StringValue: "high",
+          },
+          color: { DataType: "String", StringValue: "blue" },
+          price: { DataType: "Number", StringValue: "150" },
+        },
+      })
+    );
   } catch (error) {
     console.log(`error`, error);
 
     await snsClient.send(
       new PublishCommand({
         Message: `Error: ${error}`,
-        TopicArn: process.env.TOPIC_ARN,
+        TopicArn: process.env.ERROR_TOPIC_ARN,
       })
     );
   }
