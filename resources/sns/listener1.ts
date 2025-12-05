@@ -1,16 +1,18 @@
 import { SNSEvent } from "aws-lambda";
 
 export const mainHandler = (event: SNSEvent) => {
-  const record = event.Records[0];
-  const { Message, MessageAttributes } = record.Sns;
-
-  console.log(`MessageAttributes`, MessageAttributes);
+  event.Records.forEach((_) => {
+    const { Message, MessageAttributes } = _.Sns;
+    console.log(`message1`, {
+      message: Message,
+      messageAttributes: MessageAttributes,
+    });
+  });
 
   return {
     status: 200,
     body: {
-      message: Message,
-      messageAttributes: MessageAttributes,
+      message: `listener1`,
     },
   };
 };

@@ -55,7 +55,7 @@ export class SNSStack extends cdk.Stack {
 
     new scheduler.Schedule(this, "scheduler", {
       scheduleName: "scheduler",
-      schedule: scheduler.ScheduleExpression.cron({ hour: "00", minute: "12" }),
+      schedule: scheduler.ScheduleExpression.cron({ hour: "18", minute: "08" }),
       target: new targets.LambdaInvoke(sourceLambda),
     });
 
