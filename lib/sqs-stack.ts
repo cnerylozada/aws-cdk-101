@@ -17,11 +17,20 @@ export class SQSStack extends cdk.Stack {
       default: "dev",
     });
 
+    const deadLetterQueue = new sqs.Queue(this, "deadLetterQueue", {
+      queueName: `deadLetterQueue_${environment.valueAsString}`,
+      retentionPeriod: cdk.Duration.days(1),
+    });
+
     const mainQueue = new sqs.Queue(this, "mainQueue", {
       queueName: `mainQueue_${environment.valueAsString}`,
       visibilityTimeout: cdk.Duration.seconds(30),
       retentionPeriod: cdk.Duration.minutes(10),
       receiveMessageWaitTime: cdk.Duration.seconds(10),
+      deadLetterQueue: {
+        queue: deadLetterQueue,
+        maxReceiveCount: 3,
+      },
     });
 
     const errorTopic = new sns.Topic(this, "errorTopic", {
@@ -55,13 +64,13 @@ export class SQSStack extends cdk.Stack {
       ),
       handler: "mainHandler",
       environment: {
-        QUEUE_URL: mainQueue.queueUrl,
         ERROR_TOPIC_ARN: errorTopic.topicArn,
       },
     });
     consumer.addEventSource(
       new SqsEventSource(mainQueue, {
         batchSize: 3,
+        reportBatchItemFailures: true,
       })
     );
     errorTopic.grantPublish(consumer);
